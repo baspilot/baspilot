@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BAS Pilot — Smart GST & BAS for Australian Businesses</title>
+<meta name="description" content="Upload your bank statement, AI categorises every transaction, GST calculated automatically. Full BAS report ready in minutes. Australia's smartest BAS tool."/>
+<meta property="og:title" content="BAS Pilot — Smart GST & BAS"/>
+<meta property="og:description" content="Upload bank CSV → AI adds GST categories → BAS report ready. No accountant needed."/>
+<meta property="og:type" content="website"/>
+<meta name="theme-color" content="#0a1628"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+
+<!-- ════ TOAST CONTAINER ════ -->
+<div id="toastContainer"></div>
+
+<!-- ════ MOBILE MENU ════ -->
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mobile-menu-close" onclick="closeMobileMenu()">✕</button>
+  <div class="mobile-menu-link" onclick="navTo('home')">Home</div>
+  <div class="mobile-menu-link" onclick="navTo('pricing')">Pricing</div>
+  <div class="mobile-menu-link" onclick="navTo('about')">About</div>
+  <div class="mobile-menu-link" onclick="navTo('contact')">Contact</div>
+  <div class="mobile-menu-link" onclick="navTo('login')">Log In</div>
+  <div class="mobile-menu-link" style="background:var(--blue);color:#fff;border-radius:12px" onclick="navTo('signup')">Start Free →</div>
+</div>
+
+<!-- ════ PRICING MODAL ════ -->
+<div class="modal-ov" id="modal">
+  <div class="modal">
+    <div class="m-hdr">
+      <button class="m-cls" onclick="closeModal()">✕</button>
+      <div class="m-h">Choose Your Plan</div>
+      <div class="m-s">7-day free trial · Cancel anytime · No credit card needed</div>
+    </div>
+    <div class="m-plans">
+      <div class="mplan">
+        <div class="mp-name">Starter</div><div class="mp-price">$19<span>/mo</span></div>
+        <div class="mp-desc">Sole traders</div>
+        <ul class="mp-feats"><li>1 ABN</li><li>Unlimited BAS</li><li>AI categorisation</li><li>Excel export</li><li class="no">Multi-account</li></ul>
+        <button class="mp-btn mp-o" onclick="goSignup('starter')">Start Trial</button>
+      </div>
+      <div class="mplan pop"><div class="mp-b">⭐ Popular</div>
+        <div class="mp-name">Pro</div><div class="mp-price">$49<span>/mo</span></div>
+        <div class="mp-desc">Growing businesses</div>
+        <ul class="mp-feats"><li>3 ABNs</li><li>Unlimited BAS</li><li>AI categorisation</li><li>Excel + PDF</li><li>Multi-account</li></ul>
+        <button class="mp-btn mp-s" onclick="goSignup('pro')">Start Trial</button>
+      </div>
+      <div class="mplan">
+        <div class="mp-name">Accountant</div><div class="mp-price">$149<span>/mo</span></div>
+        <div class="mp-desc">For accountants</div>
+        <ul class="mp-feats"><li>Unlimited clients</li><li>Unlimited BAS</li><li>AI categorisation</li><li>Excel + PDF</li><li>Multi-account</li></ul>
+        <button class="mp-btn mp-d" onclick="goSignup('accountant')">Contact Us</button>
+      </div>
+    </div>
+    <div class="m-footer">🔒 Stripe · <a onclick="navTo('legal')">Terms</a> · <a onclick="navTo('legal')">Privacy</a> · <span style="color:#057a55;font-weight:600">✓ 7-day trial included</span></div>
+  </div>
+</div>
+
+<!-- ════ NAVBAR ════ -->
+<nav class="navbar">
+  <div class="logo" onclick="navTo('home')">BAS <span>Pilot</span></div>
+  <div class="nav-center" id="navCenter">
+    <button class="nav-link active" id="nl-home" onclick="navTo('home')">Home</button>
+    <button class="nav-link" id="nl-pricing" onclick="navTo('pricing')">Pricing</button>
+    <button class="nav-link" id="nl-about" onclick="navTo('about')">About</button>
+    <button class="nav-link" id="nl-contact" onclick="navTo('contact')">Contact</button>
+  </div>
+  <div class="nav-right" id="navGuest">
+    <button class="btn-nav btn-nav-ghost" onclick="navTo('login')">Log In</button>
+    <div class="nav-divider"></div>
+    <button class="btn-nav btn-nav-solid" onclick="navTo('signup')">Start Free →</button>
+    <button class="hamburger" onclick="openMobileMenu()"><span></span><span></span><span></span></button>
+  </div>
+  <div class="nav-right" id="navUser" style="display:none">
+    <div class="nav-avatar" id="navAvatar" onclick="navTo('dashboard')">?</div>
+    <span class="nav-user-name" id="navUserName"></span>
+    <button class="btn-nav btn-nav-solid" onclick="navTo('app')" style="font-size:12px;padding:7px 14px">Open App</button>
+    <button class="btn-nav btn-nav-logout" onclick="doLogout()">Log Out</button>
+    <button class="hamburger" onclick="openMobileMenu()"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════
+     HOME
+════════════════════════════════ -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="htag">AI-Powered · ATO Compliant · 🇦🇺 Australia</div>
+    <h1>Upload bank CSV →<br/><em>BAS ready</em> instantly.</h1>
+    <p class="hsub">Raw bank statement in — AI adds categories & GST — full BAS report out. No accountant needed.</p>
+    <div class="how">
+      <div class="how-s"><div class="how-n">1</div> Upload bank CSV</div>
+      <div class="how-arr">→</div>
+      <div class="how-s"><div class="how-n">2</div> AI categorises</div>
+      <div class="how-arr">→</div>
+      <div class="how-s"><div class="how-n">3</div> Review & fix</div>
+      <div class="how-arr">→</div>
+      <div class="how-s"><div class="how-n">4</div> BAS report ready</div>
+    </div>
+    <div class="hero-cta">
+      <button class="btn-hp" onclick="navTo('signup')">Start Free — No Credit Card →</button>
+      <button class="btn-hs" onclick="navTo('pricing')">See Pricing</button>
+    </div>
+    <div class="hero-note">✓ First BAS free · 7-day trial · Cancel anytime · Not a tax agent</div>
+  </div>
+  <div class="feats-section">
+    <div class="feats-grid">
+      <div class="feat"><div class="feat-ico">🤖</div><div class="feat-t">AI Auto-Categorisation</div><div class="feat-d">Upload any Australian bank CSV. AI classifies every transaction — FUEL, ADVERTISING, SALES, 30+ categories.</div></div>
+      <div class="feat"><div class="feat-ico">✅</div><div class="feat-t">GST Auto-Calculated</div><div class="feat-d">Label 1A, 1B, Label 9 at 1/11 per ATO ruling GSTR 2006/3. Instant and accurate.</div></div>
+      <div class="feat"><div class="feat-ico">✏️</div><div class="feat-t">Review & Fix Instantly</div><div class="feat-d">Fix any AI category with one tap. BAS figures update in real time.</div></div>
+      <div class="feat"><div class="feat-ico">📊</div><div class="feat-t">Professional BAS Report</div><div class="feat-d">Excel report: BAS Summary, Monthly Breakdown, full Transaction Register.</div></div>
+      <div class="feat"><div class="feat-ico">🏦</div><div class="feat-t">Any Australian Bank</div><div class="feat-d">CommBank, ANZ, Westpac, NAB, Bendigo. Excel & CSV. Multiple accounts merged.</div></div>
+      <div class="feat"><div class="feat-ico">🔒</div><div class="feat-t">Your Data Stays Private</div><div class="feat-d">All processing in your browser. Bank files never uploaded to our servers. Ever.</div></div>
+    </div>
+  </div>
+  <div class="testimonials">
+    <div class="test-title">Loved by Australian Business Owners</div>
+    <div class="test-grid">
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-text">"Used to spend 3 hours every quarter sorting my BAS. Now it takes 10 minutes. Absolute game changer."</div>
+        <div class="tcard-author"><div class="tcard-avatar">S</div><div><div class="tcard-name">Sarah M.</div><div class="tcard-role">Freelance Designer · Sydney</div></div></div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-text">"The AI got 95% of categories right first time. I fixed 3 items and my BAS was done. Better than my old bookkeeper."</div>
+        <div class="tcard-author"><div class="tcard-avatar">J</div><div><div class="tcard-name">James T.</div><div class="tcard-role">Sole Trader · Melbourne</div></div></div>
+      </div>
+      <div class="tcard">
+        <div class="tcard-stars">★★★★★</div>
+        <div class="tcard-text">"I use the Accountant plan for 12 clients. Saves me 2 hours per client per quarter. ROI in week one."</div>
+        <div class="tcard-author"><div class="tcard-avatar">L</div><div><div class="tcard-name">Linda K.</div><div class="tcard-role">Registered BAS Agent · Brisbane</div></div></div>
+      </div>
+    </div>
+    <div style="text-align:center">
+      <button class="btn-hp" onclick="navTo('signup')">Create Free Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     LOGIN
+════════════════════════════════ -->
+<div class="page" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-hdr">
+        <div class="auth-logo">BAS <span>Pilot</span></div>
+        <div class="auth-tag">Smart GST & BAS · Australia 🇦🇺</div>
+      </div>
+      <div class="auth-body">
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Log in to your BAS Pilot account</div>
+        <div class="auth-alert" id="loginAlert"></div>
+        <button class="btn-google" onclick="googleAuth('login')">
+          <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-or"><span>or</span></div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password <a onclick="doForgotPassword()">Forgot password?</a></label>
+          <input type="password" class="form-input" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <button class="btn-auth" id="loginBtn" onclick="doLogin()">
+          <span id="loginBtnTxt">Log In →</span>
+        </button>
+        <div class="auth-switch">Don't have an account? <a onclick="navTo('signup')">Sign up free</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     SIGNUP
+════════════════════════════════ -->
+<div class="page" id="page-signup">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-hdr">
+        <div class="auth-logo">BAS <span>Pilot</span></div>
+        <div class="auth-tag">Start your 7-day free trial · No credit card</div>
+      </div>
+      <div class="auth-body">
+        <div class="auth-title">Create your account</div>
+        <div class="auth-sub">No credit card required · Cancel anytime</div>
+        <div class="auth-alert" id="signupAlert"></div>
+        <button class="btn-google" onclick="googleAuth('signup')">
+          <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Sign up with Google
+        </button>
+        <div class="auth-or"><span>or</span></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="sfirst" placeholder="Jane"/></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="slast" placeholder="Smith"/></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="semail" placeholder="you@example.com"/>
+          <div class="form-hint" id="emailHint">Please enter a valid email address</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Business Name <span style="font-weight:400;opacity:.5;text-transform:none">(optional)</span></label>
+          <input type="text" class="form-input" id="sbiz" placeholder="My Business Pty Ltd"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ABN <span style="font-weight:400;opacity:.5;text-transform:none">(optional)</span></label>
+          <div class="abn-row">
+            <input type="text" class="form-input" id="sabn" placeholder="XX XXX XXX XXX" maxlength="14" oninput="formatABN(this)"/>
+            <button class="abn-check" id="abnCheckBtn" onclick="verifyABN()">Verify</button>
+          </div>
+          <div class="form-hint" id="abnHint"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="spass" placeholder="Min. 8 characters"/>
+          <div class="form-hint" id="passHint">Password must be at least 8 characters</div>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--dark);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">Choose Your Plan</div>
+          <div class="plan-sel-grid">
+            <div class="pso" id="pso-free" onclick="selPlan('free')"><div class="pso-name">Free Trial</div><div class="pso-price">$0</div><div class="pso-trial">7 days free</div></div>
+            <div class="pso sel" id="pso-starter" onclick="selPlan('starter')"><div class="pso-name">Starter</div><div class="pso-price">$19/mo</div><div class="pso-trial">7-day trial</div></div>
+            <div class="pso" id="pso-pro" onclick="selPlan('pro')"><div class="pso-name">Pro ⭐</div><div class="pso-price">$49/mo</div><div class="pso-trial">7-day trial</div></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.5">By signing up you agree to our <a onclick="navTo('legal')" style="color:var(--blue);cursor:pointer">Terms</a> & <a onclick="navTo('legal')" style="color:var(--blue);cursor:pointer">Privacy Policy</a>. Not a registered tax agent.</div>
+        <button class="btn-auth" id="signupBtn" onclick="doSignup()"><span id="signupBtnTxt">Create Account & Start Free Trial →</span></button>
+        <div class="auth-switch">Already have an account? <a onclick="navTo('login')">Log in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     DASHBOARD
+════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="dash-wrap">
+    <div class="dash-top">
+      <div><div class="dash-hello" id="dashHello">Good morning! 👋</div><div class="dash-date" id="dashDate"></div></div>
+      <div class="plan-pill" id="planPill" onclick="openModal()">⭐ Starter · Trial</div>
+    </div>
+    <div class="dash-stats" id="dashStats">
+      <div class="dstat"><div class="dstat-lbl">BAS Reports</div><div class="dstat-val" id="ds1">0</div><div class="dstat-sub">Generated total</div></div>
+      <div class="dstat highlight"><div class="dstat-lbl">GST Credits Found</div><div class="dstat-val" id="ds2">$0</div><div class="dstat-sub">Claimable from ATO</div></div>
+      <div class="dstat"><div class="dstat-lbl">Net GST Paid</div><div class="dstat-val" id="ds3">$0</div><div class="dstat-sub">Total paid to ATO</div></div>
+      <div class="dstat"><div class="dstat-lbl">Last Report</div><div class="dstat-val" id="ds4">—</div><div class="dstat-sub">Most recent</div></div>
+    </div>
+    <div class="dash-actions">
+      <div class="daction" onclick="navTo('app')"><div class="daction-ico">📂</div><div class="daction-t">New BAS Report</div><div class="daction-d">Upload bank statement → AI categorises → GST calculated</div></div>
+      <div class="daction" onclick="navTo('settings')"><div class="daction-ico">⚙️</div><div class="daction-t">Account Settings</div><div class="daction-d">Update profile, password, ABN, and subscription</div></div>
+      <div class="daction" onclick="openModal()"><div class="daction-ico">⚡</div><div class="daction-t">Upgrade Plan</div><div class="daction-d">Unlock full reports, PDF export, multi-account merge</div></div>
+    </div>
+    <div class="dash-bottom">
+      <div class="dash-box">
+        <div class="dash-box-title">Recent Reports <a onclick="navTo('app')">+ New Report</a></div>
+        <div id="recentReps">
+          <div class="empty-st">📋 No reports yet — <a onclick="navTo('app')">generate your first BAS</a></div>
+        </div>
+      </div>
+      <div class="dash-box">
+        <div class="dash-box-title">Quick Tips</div>
+        <div class="tip-item"><div class="tip-ico">💡</div><div class="tip-text"><strong>Review AI categories</strong>AI is 90%+ accurate but always check TRANSFER and PERSONAL items.</div></div>
+        <div class="tip-item"><div class="tip-ico">📅</div><div class="tip-text"><strong>Q2 BAS due 28 Feb</strong>Quarter 2 (Oct–Dec) lodgement deadline is 28 February 2026.</div></div>
+        <div class="tip-item"><div class="tip-ico">🔒</div><div class="tip-text"><strong>Your data is private</strong>Bank files process in your browser — never sent to our servers.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ACCOUNT SETTINGS
+════════════════════════════════ -->
+<div class="page" id="page-settings">
+  <div class="settings-wrap">
+    <div class="settings-title">Account Settings</div>
+    <div class="settings-sub">Manage your profile, security, and subscription</div>
+    <!-- Profile -->
+    <div class="settings-card">
+      <div class="settings-section">
+        <div class="ss-title">Profile Information <button class="btn-save" onclick="saveProfile()" style="font-size:11px;padding:6px 14px">Save Changes</button></div>
+        <div class="ss-sub">Update your name, email, and business details</div>
+        <div class="settings-form-row">
+          <div><label class="settings-label">First Name</label><input class="settings-input" id="setFirst" placeholder="Jane"/></div>
+          <div><label class="settings-label">Last Name</label><input class="settings-input" id="setLast" placeholder="Smith"/></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="settings-label">Email Address</label><input class="settings-input" id="setEmail" placeholder="you@example.com" type="email"/></div>
+        <div style="margin-bottom:10px"><label class="settings-label">Business Name</label><input class="settings-input" id="setBiz" placeholder="My Business Pty Ltd"/></div>
+        <div><label class="settings-label">ABN</label><input class="settings-input" id="setABN" placeholder="XX XXX XXX XXX" maxlength="14" oninput="formatABN(this)"/></div>
+      </div>
+    </div>
+    <!-- Password -->
+    <div class="settings-card">
+      <div class="settings-section">
+        <div class="ss-title">Change Password <button class="btn-save" onclick="changePassword()" style="font-size:11px;padding:6px 14px">Update</button></div>
+        <div class="ss-sub">Use a strong password of at least 8 characters</div>
+        <div style="margin-bottom:10px"><label class="settings-label">Current Password</label><input class="settings-input" id="setCurrPass" type="password" placeholder="••••••••"/></div>
+        <div class="settings-form-row">
+          <div><label class="settings-label">New Password</label><input class="settings-input" id="setNewPass" type="password" placeholder="••••••••"/></div>
+          <div><label class="settings-label">Confirm New Password</label><input class="settings-input" id="setConfPass" type="password" placeholder="••••••••"/></div>
+        </div>
+      </div>
+    </div>
+    <!-- Subscription -->
+    <div class="settings-card">
+      <div class="settings-section">
+        <div class="ss-title">Subscription & Billing</div>
+        <div class="ss-sub">Manage your plan and payment details</div>
+        <div class="plan-current" id="currentPlanBox">
+          <div class="pc-left"><div class="pc-ico">⭐</div><div><div class="pc-name" id="setPlanName">Starter Plan</div><div class="pc-detail" id="setPlanDetail">Trial — 7 days remaining</div></div></div>
+          <button class="btn-save" onclick="openModal()">Upgrade →</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-save" onclick="manageBilling()">Manage via Stripe →</button>
+          <button class="btn-danger" onclick="cancelSubscription()">Cancel Subscription</button>
+        </div>
+        <div style="margin-top:16px">
+          <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Billing History</div>
+          <div id="invoiceList">
+            <div style="font-size:12px;color:rgba(255,255,255,.25);padding:8px 0">No invoices yet — billing starts after your free trial</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Danger Zone -->
+    <div class="settings-card">
+      <div class="settings-section">
+        <div class="ss-title" style="color:#f87171">Danger Zone</div>
+        <div class="ss-sub">These actions are permanent and cannot be undone</div>
+        <button class="btn-danger" onclick="deleteAccount()">Delete Account & All Data</button>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-navy" onclick="navTo('dashboard')">← Back to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     APP
+════════════════════════════════ -->
+<div class="page" id="page-app">
+  <div class="app-wrap">
+    <div class="app-card">
+      <div class="steps-bar">
+        <div class="step active" id="as1"><div class="sn">1</div> Upload CSV</div>
+        <div class="step" id="as2"><div class="sn">2</div> AI Categorising</div>
+        <div class="step" id="as3"><div class="sn">3</div> Review & Edit</div>
+        <div class="step" id="as4"><div class="sn">4</div> BAS Report</div>
+      </div>
+      <div class="panel active" id="ap1">
+        <div style="background:linear-gradient(90deg,#ecfdf5,#d1fae5);border:1px solid #6ee7b7;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div><div style="font-size:13px;color:#057a55;font-weight:600">🎁 First BAS free</div><div style="font-size:11px;color:#065f46;opacity:.7">No credit card · Upgrade anytime</div></div>
+          <button style="background:#057a55;color:#fff;border:none;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="openModal()">Upgrade →</button>
+        </div>
+        <div class="upload-zone" id="dz" onclick="document.getElementById('fi').click()">
+          <span class="uico">📂</span>
+          <h3>Upload your bank statement</h3>
+          <p>CommBank · ANZ · Westpac · NAB · Any Australian bank · Excel or CSV</p>
+          <button class="ubtn" onclick="event.stopPropagation();document.getElementById('fi').click()">Choose File</button>
+          <input type="file" id="fi" accept=".xlsx,.xls,.csv" multiple style="display:none"/>
+        </div>
+        <div class="chip-row" id="chips"></div>
+        <div id="upErr" style="background:#fff1f2;border:1px solid #fecaca;border-radius:8px;padding:9px 13px;color:#c81e1e;font-size:12px;margin-top:9px;display:none"></div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="navTo('dashboard')">← Dashboard</button>
+          <button class="btn btn-primary" id="btnS2" disabled>AI Categorise Transactions →</button>
+        </div>
+      </div>
+      <div class="panel" id="ap2">
+        <div class="ai-box">
+          <div class="ai-t">🤖 AI Categorising Transactions…</div>
+          <div class="ai-s">Detecting income, expenses, GST items, and non-GST transfers automatically</div>
+          <div class="pb"><div class="pf" id="pFill" style="width:0%"></div></div>
+          <div class="pl" id="pLbl">Starting…</div>
+        </div>
+      </div>
+      <div class="panel" id="ap3">
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:9px;padding:10px 13px;margin-bottom:12px;font-size:13px;color:#92400e;display:flex;align-items:flex-start;gap:7px">
+          <span>✏️</span><div><strong>Review AI categories.</strong> Fix anything that looks wrong — your BAS updates instantly.</div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-hdr"><span id="tblCount">Transactions</span><span style="font-size:11px;opacity:.55;font-weight:400">Green = GST · White = Non-GST</span></div>
+          <div class="tbl-scroll">
+            <table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right">Amount</th><th>Category</th><th>GST</th></tr></thead><tbody id="tblBody"></tbody></table>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="appStep(1)">← Back</button>
+          <button class="btn btn-primary" id="btnCalc">Calculate GST & Generate BAS →</button>
+        </div>
+      </div>
+      <div class="panel" id="ap4">
+        <div class="loading" id="loading"><div class="spinner"></div><div class="ldtxt">Calculating GST…</div></div>
+        <div id="resContent" style="display:none">
+          <div class="kpi-grid" id="kpiCards"></div>
+          <div class="ato-box" id="atoBox"></div>
+          <div class="stitle">Monthly Breakdown</div>
+          <div class="mgrid" id="mgrid"></div>
+          <div class="stitle">Expense Categories</div>
+          <div class="pw-wrap" id="catWrap">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead><tr style="background:var(--navy);color:#fff">
+                <th style="padding:7px 11px;text-align:left;font-size:10px;text-transform:uppercase">Category</th>
+                <th style="padding:7px 11px;font-size:10px;text-transform:uppercase;text-align:center">Txns</th>
+                <th style="padding:7px 11px;font-size:10px;text-transform:uppercase">Total (incl GST)</th>
+                <th style="padding:7px 11px;font-size:10px;text-transform:uppercase">GST Credit</th>
+                <th style="padding:7px 11px;font-size:10px;text-transform:uppercase">Net Amount</th>
+              </tr></thead>
+              <tbody id="catBody"></tbody>
+            </table>
+            <div class="pw-overlay" id="pwOverlay">
+              <div class="pw-card">
+                <div class="pw-ico">🔒</div><div class="pw-h">Unlock Full Report</div>
+                <div class="pw-p">Upgrade to see full categories & download BAS Excel</div>
+                <button class="btn-unlock" onclick="openModal()">Plans from $19/mo</button>
+              </div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-navy" onclick="resetApp()">↩ New Statement</button>
+            <button class="btn btn-secondary" onclick="navTo('dashboard')">← Dashboard</button>
+            <button class="btn btn-green" id="btnDL">⬇ Download BAS Excel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     PRICING
+════════════════════════════════ -->
+<div class="page" id="page-pricing">
+  <div class="pricing-wrap">
+    <div class="pricing-hero"><h2>Simple Pricing</h2><p>7-day free trial on all plans · Cancel anytime · No credit card required</p></div>
+    <div class="plans-g">
+      <div class="pcard"><div class="p-name">Starter</div><div class="p-price">$19<span>/month</span></div><div class="p-desc">Sole traders & freelancers with one ABN</div>
+        <ul class="p-feats"><li>1 ABN / Business</li><li>Unlimited BAS reports</li><li>AI auto-categorisation</li><li>Excel export</li><li class="no">Multi-account merge</li><li class="no">PDF export</li><li class="no">Priority support</li></ul>
+        <button class="p-btn pb-o" onclick="goSignup('starter')">Start Free Trial</button>
+      </div>
+      <div class="pcard pop"><div class="pop-b">⭐ Most Popular</div><div class="p-name">Pro</div><div class="p-price">$49<span>/month</span></div><div class="p-desc">Growing businesses with multiple accounts</div>
+        <ul class="p-feats"><li>Up to 3 ABNs</li><li>Unlimited BAS reports</li><li>AI auto-categorisation</li><li>Excel + PDF export</li><li>Multi-account merge</li><li>Monthly breakdown</li><li>Priority support</li></ul>
+        <button class="p-btn pb-s" onclick="goSignup('pro')">Start Free Trial</button>
+      </div>
+      <div class="pcard"><div class="p-name">Accountant</div><div class="p-price">$149<span>/month</span></div><div class="p-desc">For accountants managing clients</div>
+        <ul class="p-feats"><li>Unlimited clients</li><li>Unlimited BAS reports</li><li>AI auto-categorisation</li><li>Excel + PDF export</li><li>Multi-account merge</li><li>Client dashboard</li><li>Dedicated support</li></ul>
+        <button class="p-btn pb-d" onclick="goSignup('accountant')">Contact Us</button>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.25);margin-bottom:40px">🔒 Stripe · All prices AUD incl. GST · Cancel anytime</div>
+    <div class="faq-s">
+      <div class="faq-title">FAQ</div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)"><span>Does BAS Pilot lodge my BAS with the ATO?</span><span>↓</span></div><div class="faq-a">No. BAS Pilot is a calculation tool only. You lodge yourself via the ATO Business Portal, myGov, or through your registered tax agent.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)"><span>Is my bank data safe?</span><span>↓</span></div><div class="faq-a">Yes. All file processing happens entirely in your browser. Your bank statements are never uploaded to our servers at any point.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)"><span>Which banks are supported?</span><span>↓</span></div><div class="faq-a">Any Australian bank that exports CSV or Excel — CommBank, ANZ, Westpac, NAB, Bendigo, ING, and more.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)"><span>How accurate is the AI?</span><span>↓</span></div><div class="faq-a">Around 90–95% for common transactions. You should always review before using the BAS figures, especially for unusual or mixed-use transactions.</div></div>
+      <div class="faq-item"><div class="faq-q" onclick="toggleFAQ(this)"><span>Can I cancel anytime?</span><span>↓</span></div><div class="faq-a">Yes. Cancel from Account Settings. Your subscription remains active until end of billing period. Full refund within 7 days of first payment.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ABOUT
+════════════════════════════════ -->
+<div class="page" id="page-about">
+  <div class="about-wrap">
+    <div class="about-hero">
+      <h2>About BAS Pilot</h2>
+      <p>We built the tool we wished existed when running our own businesses — a fast, smart, no-nonsense way to handle GST without paying $300 to an accountant every quarter.</p>
+    </div>
+    <div class="about-section">
+      <div class="about-s-title">🇦🇺 Built for Australia</div>
+      <div class="about-s-text">BAS Pilot is built specifically for the Australian tax system. We understand CommBank export formats, ATO rulings, GST-free supplies, and the reality of sole trader life. Every feature is designed around Australian business needs — not adapted from a US product.</div>
+    </div>
+    <div class="about-section">
+      <div class="about-s-title">🤖 How the AI Works</div>
+      <div class="about-s-text">Our AI uses pattern recognition to match transaction descriptions against 30+ business categories. It's trained on thousands of Australian bank transactions — Ampol, Telstra, CommBank, ATO BPAY, Woolworths, Facebook Ads, and more. It runs entirely in your browser — your data never leaves your device.</div>
+    </div>
+    <div class="about-section">
+      <div class="about-s-title">⚖️ Our Commitment</div>
+      <div class="about-s-text">We're transparent about what BAS Pilot is — a software tool, not a registered tax agent. We always recommend verifying with a professional for complex situations. We charge fair prices, never lock you in, and never sell your data.</div>
+    </div>
+    <div class="about-section">
+      <div class="about-s-title">👥 The Team</div>
+      <div class="team-grid">
+        <div class="team-card"><div class="team-avatar">B</div><div><div class="team-name">BAS Pilot Founder</div><div class="team-role">Product & Engineering · Adelaide, SA</div></div></div>
+        <div class="team-card"><div class="team-avatar">S</div><div><div class="team-name">Support Team</div><div class="team-role">support@basmate.com.au</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     CONTACT
+════════════════════════════════ -->
+<div class="page" id="page-contact">
+  <div class="contact-wrap">
+    <div class="contact-hero"><h2>Contact Us</h2><p>We usually respond within 24 hours on business days</p></div>
+    <div class="contact-card">
+      <label class="contact-label">Your Name</label>
+      <input type="text" class="contact-input" id="cname" placeholder="Jane Smith"/>
+      <label class="contact-label">Email Address</label>
+      <input type="email" class="contact-input" id="cemail" placeholder="you@example.com"/>
+      <label class="contact-label">Subject</label>
+      <input type="text" class="contact-input" id="csubject" placeholder="Question about my BAS / Account issue / Other"/>
+      <label class="contact-label">Message</label>
+      <textarea class="contact-textarea" id="cmessage" placeholder="Describe your question or issue..."></textarea>
+      <button style="background:var(--blue);color:#fff;border:none;padding:12px 28px;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;width:100%;font-family:'DM Sans',sans-serif;transition:var(--transition)" onclick="sendContact()" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='var(--blue)'">Send Message →</button>
+    </div>
+    <div class="contact-info">
+      <div class="ci-item"><div class="ci-ico">📧</div><div><div class="ci-label">General Support</div><div class="ci-val">support@basmate.com.au</div></div></div>
+      <div class="ci-item"><div class="ci-ico">⚖️</div><div><div class="ci-label">Legal Enquiries</div><div class="ci-val">legal@basmate.com.au</div></div></div>
+      <div class="ci-item"><div class="ci-ico">📍</div><div><div class="ci-label">Location</div><div class="ci-val">Adelaide, South Australia</div></div></div>
+      <div class="ci-item"><div class="ci-ico">⏰</div><div><div class="ci-label">Response Time</div><div class="ci-val">Within 24 hours</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     LEGAL
+════════════════════════════════ -->
+<div class="page" id="page-legal">
+  <div class="legal-wrap">
+    <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:18px">Legal</div>
+    <div class="legal-warn">⚠️ <strong>BAS Pilot is a software tool only — NOT a registered tax agent.</strong> All BAS figures must be verified before lodging with the ATO. This does not constitute tax or financial advice.</div>
+    <div class="legal-card"><div class="legal-card-title">📄 Terms of Service</div><div class="legal-card-text">BAS Pilot Pty Ltd (ABN: XX XXX XXX XXX) provides this software on an "as is" basis. Liability is limited to 3 months of subscription fees. No warranty of accuracy or fitness for purpose. 7-day refund on first payment. Governed by South Australian law.</div></div>
+    <div class="legal-card"><div class="legal-card-title">🔒 Privacy Policy</div><div class="legal-card-text">All bank file processing happens in your browser — data never leaves your device. Account data (name, email, subscription) stored securely in Australia. We never sell your data. Compliant with Australian Privacy Act 1988. Contact: <a href="mailto:privacy@basmate.com.au">privacy@basmate.com.au</a></div></div>
+    <div class="legal-card"><div class="legal-card-title">⚠️ Tax Disclaimer</div><div class="legal-card-text">BAS Pilot is NOT registered with the Tax Practitioners Board. AI categorisation may be incorrect. GST figures are estimates only. You are responsible for BAS accuracy under the Taxation Administration Act 1953. ATO penalties are your responsibility. Find a registered agent at <a href="https://tpb.gov.au" target="_blank">tpb.gov.au</a>.</div></div>
+    <div style="font-size:12px;color:rgba(255,255,255,.2);margin-top:16px;font-family:'DM Mono',monospace">© 2026 BAS Pilot Pty Ltd · ABN: XX XXX XXX XXX · v2.0</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     404
+════════════════════════════════ -->
+<div class="page" id="page-404">
+  <div class="page-404">
+    <div class="e-code">404</div>
+    <h2>Page Not Found</h2>
+    <p>The page you're looking for doesn't exist or has been moved.</p>
+    <button class="btn-hp" onclick="navTo('home')">← Back to Home</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     REPORTS HISTORY PAGE
+════════════════════════════════ -->
+<div class="page" id="page-reports">
+  <div class="dash-wrap">
+    <div class="dash-top">
+      <div><div class="dash-hello" style="font-size:20px">📊 All BAS Reports</div><div class="dash-date">Your complete report history</div></div>
+      <button class="btn-hp" onclick="navTo('app')" style="font-size:13px;padding:10px 20px">+ New Report</button>
+    </div>
+    <!-- ATO Due Date Alert -->
+    <div id="atoAlert" style="background:linear-gradient(90deg,rgba(217,119,6,.18),rgba(217,119,6,.08));border:1px solid rgba(217,119,6,.35);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">⚠️</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#fbbf24">BAS Q2 Due Date: 28 February 2026</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px">Quarter 2 (Oct–Dec 2025) · Lodge via ATO Business Portal</div>
+        </div>
+      </div>
+      <a href="https://bp.ato.gov.au" target="_blank" style="background:rgba(217,119,6,.2);border:1px solid rgba(217,119,6,.4);color:#fbbf24;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;transition:.2s">Lodge Now →</a>
+    </div>
+    <!-- Quarter Filter -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap" id="quarterFilter">
+      <button class="qbtn active" onclick="filterReports('all',this)">All</button>
+      <button class="qbtn" onclick="filterReports('Q1',this)">Q1 (Jul–Sep)</button>
+      <button class="qbtn" onclick="filterReports('Q2',this)">Q2 (Oct–Dec)</button>
+      <button class="qbtn" onclick="filterReports('Q3',this)">Q3 (Jan–Mar)</button>
+      <button class="qbtn" onclick="filterReports('Q4',this)">Q4 (Apr–Jun)</button>
+    </div>
+    <!-- Reports Table -->
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden">
+      <div style="background:rgba(255,255,255,.04);padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;font-size:10px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.05em">
+        <span>Period</span><span>GST 1A</span><span>GST 1B</span><span>Net GST</span><span>Actions</span>
+      </div>
+      <div id="reportsTableBody">
+        <div class="empty-st" style="padding:40px">📋 No reports yet — <a onclick="navTo('app')" style="color:#38bdf8;cursor:pointer">generate your first BAS</a></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn btn-navy" onclick="navTo('dashboard')">← Dashboard</button>
+      <button class="btn btn-secondary" onclick="exportAllCSV()">⬇ Export All as CSV</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     REPORT DETAIL VIEW
+════════════════════════════════ -->
+<div class="page" id="page-report-detail">
+  <div class="dash-wrap">
+    <div class="dash-top">
+      <div><div class="dash-hello" id="rdTitle" style="font-size:18px">BAS Report</div><div class="dash-date" id="rdDate"></div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary" onclick="window.print()" style="font-size:12px">🖨️ Print</button>
+        <button class="btn btn-green" id="rdDownload" style="font-size:12px">⬇ Download Excel</button>
+      </div>
+    </div>
+    <div id="rdContent">
+      <div class="kpi-grid" id="rdKpi"></div>
+      <div class="ato-box" id="rdAto"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-navy" onclick="navTo('reports')">← All Reports</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     EMAIL VERIFICATION PAGE
+════════════════════════════════ -->
+<div class="page" id="page-verify">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-hdr">
+        <div class="auth-logo">BAS <span>Pilot</span></div>
+        <div class="auth-tag">Almost there!</div>
+      </div>
+      <div class="auth-body" style="text-align:center">
+        <div style="font-size:52px;margin-bottom:16px">✉️</div>
+        <div class="auth-title">Check your email</div>
+        <div class="auth-sub" style="margin-bottom:20px">We sent a verification link to <strong id="verifyEmail" style="color:var(--dark)">your email</strong>. Click the link to activate your account.</div>
+        <div class="alert" style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;margin-bottom:20px;display:block;font-size:13px">
+          ℹ️ Can't find it? Check your spam folder or request a new link below.
+        </div>
+        <button class="btn-auth" onclick="resendVerification()">Resend Verification Email</button>
+        <div class="auth-switch" style="margin-top:16px"><a onclick="navTo('login')">← Back to Login</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     ONBOARDING WELCOME MODAL
+════════════════════════════════ -->
+<div class="modal-ov" id="onboardingModal">
+  <div class="modal" style="max-width:540px">
+    <div class="m-hdr" style="padding:28px 24px 22px">
+      <div style="font-size:40px;margin-bottom:10px">🎉</div>
+      <div class="m-h" style="font-size:20px">Welcome to BAS Pilot!</div>
+      <div class="m-s" id="onboardName">You're all set</div>
+    </div>
+    <div style="padding:22px 24px">
+      <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:22px">
+        <div style="display:flex;align-items:flex-start;gap:12px;background:#f8fafc;border-radius:10px;padding:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0">1</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px">Upload your bank statement</div><div style="font-size:12px;color:var(--muted)">Export CSV from CommBank, ANZ, Westpac, or any Australian bank</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:#f8fafc;border-radius:10px;padding:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;flex-shrink:0">2</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px">AI categorises automatically</div><div style="font-size:12px;color:var(--muted)">Review and fix any categories — takes about 2 minutes</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;background:#f8fafc;border-radius:10px;padding:14px">
+          <div style="width:32px;height:32px;border-radius:50%;background:#057a55;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✓</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px">Your BAS is ready</div><div style="font-size:12px;color:var(--muted)">Label 1A, 1B, Label 9 calculated. Download Excel report.</div></div>
+        </div>
+      </div>
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:9px;padding:12px;font-size:12px;color:#78350f;margin-bottom:18px">
+        ⚠️ BAS Pilot is a software tool only — not a registered tax agent. Always verify figures with a professional before lodging.
+      </div>
+      <button class="btn-auth" onclick="closeOnboarding()">Get Started — Upload My First BAS →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ FOOTER ════ -->
+<div class="site-footer" id="siteFooter">
+  <div class="sf-inner">
+    <div class="sf-top">
+      <div><div class="sf-logo">BAS <span>Pilot</span></div><div class="sf-tagline">Australia's smartest BAS tool. Upload bank CSV → AI categorises → GST calculated → report ready.</div></div>
+      <div class="sf-col"><h4>Product</h4><a onclick="navTo('app')">BAS App</a><a onclick="navTo('pricing')">Pricing</a><a onclick="navTo('dashboard')">Dashboard</a></div>
+      <div class="sf-col"><h4>Company</h4><a onclick="navTo('about')">About</a><a onclick="navTo('contact')">Contact</a><a onclick="navTo('legal')">Legal</a></div>
+      <div class="sf-col"><h4>Support</h4><a>support@basmate.com.au</a><a href="https://www.ato.gov.au" target="_blank">ATO Website</a><a href="https://www.tpb.gov.au" target="_blank">Find Tax Agent</a></div>
+    </div>
+    <div class="sf-bottom">
+      <div class="sf-copy">© 2026 BAS Pilot Pty Ltd · ABN: XX XXX XXX XXX · Not a registered tax agent</div>
+      <div class="sf-badges"><div class="sf-badge">🇦🇺 Australia</div><div class="sf-badge">🔒 Stripe</div><div class="sf-badge">⚖️ Privacy Act 1988</div><div class="sf-badge">📊 GSTR 2006/3</div></div>
+    </div>
+  </div>
+</div>
+
+
+<script src="ai.js"></script>
+<script src="gst.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
